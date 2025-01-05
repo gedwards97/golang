@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -26,9 +27,40 @@ func getAlbums(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, albums)
 }
 
+// postAlbum
+func postAlbum(c *gin.Context) {
+	var newAlbum album
+
+	if err := c.BindJSON(&newAlbum); err != nil {
+		return
+	}
+
+	// add the new album to the slice
+	albums = append(albums, newAlbum)
+	c.IndentedJSON(http.StatusCreated, newAlbum)
+}
+
+// get specific album by id
+func getAlbumById(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+
+	if err != nil {
+		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "album not found"})
+	}
+
+	if int64(len(albums)) <= id {
+		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "album not found"})
+	}
+	var retrievedAlbum = albums[id-1]
+
+	c.IndentedJSON(http.StatusOK, retrievedAlbum)
+}
+
 func main() {
 	router := gin.Default()
 	router.GET("/albums", getAlbums)
+	router.POST("/albums", postAlbum)
+	router.GET("/albums/:id", getAlbumById)
 
 	router.Run("localhost:8080")
 }
